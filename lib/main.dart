@@ -12,6 +12,11 @@ import 'package:barcode_scan2/barcode_scan2.dart';
 * FACULDADE DO CENTRO LESTE - UCL
 * CURSO: ANÁLISE E DESENVOLVIMENTO DE SISTEMAS
 *
+* Referências:
+* Video aula de flutter com o professor Lucas Alves
+* - Gerenciamento de estado com Provider:
+* https://www.alura.com.br/artigos/como-gerenciar-estados-com-flutter-provider?srsltid=AfmBOoqcZPlv-TzABiieMLJAp-Mybz1HFJ2JqBNmN2z6gmW3AHxfZEDh
+*
 * Sistema de leitor de código de barras:
 * https://github.com/mono0926/barcode_scan2
 * 
@@ -555,7 +560,39 @@ class TelaUsuario extends StatelessWidget {
   Widget build(BuildContext contexto) {
     final estadoAplicativo = Provider.of<EstadoAplicativo>(contexto);
     return Scaffold(
-      appBar: AppBar(title: const Text('Usuários')),
+      appBar: AppBar(
+        title: const Text('Usuários'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.download),
+            onPressed: () async {
+              final arquivo = await _obterArquivo('usuarios.json');
+              if (await arquivo.exists()) {
+                final conteudo = await arquivo.readAsString();
+                showDialog(
+                  context: contexto,
+                  builder: (contexto) => AlertDialog(
+                    title: const Text('Conteúdo do Arquivo'),
+                    content: SingleChildScrollView(
+                      child: Text(conteudo),
+                    ),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(contexto),
+                        child: const Text('Fechar'),
+                      ),
+                    ],
+                  ),
+                );
+              } else {
+                ScaffoldMessenger.of(contexto).showSnackBar(
+                  const SnackBar(content: Text('Arquivo não encontrado')),
+                );
+              }
+            },
+          ),
+        ],
+      ),
       body: ListView.builder(
         padding: const EdgeInsets.all(16.0),
         itemCount: estadoAplicativo.controladorUsuario.usuarios.length,
@@ -690,7 +727,39 @@ class TelaCliente extends StatelessWidget {
   Widget build(BuildContext contexto) {
     final estadoAplicativo = Provider.of<EstadoAplicativo>(contexto);
     return Scaffold(
-      appBar: AppBar(title: const Text('Clientes')),
+      appBar: AppBar(
+        title: const Text('Clientes'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.download),
+            onPressed: () async {
+              final arquivo = await _obterArquivo('clientes.json');
+              if (await arquivo.exists()) {
+                final conteudo = await arquivo.readAsString();
+                showDialog(
+                  context: contexto,
+                  builder: (contexto) => AlertDialog(
+                    title: const Text('Conteúdo do Arquivo'),
+                    content: SingleChildScrollView(
+                      child: Text(conteudo),
+                    ),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(contexto),
+                        child: const Text('Fechar'),
+                      ),
+                    ],
+                  ),
+                );
+              } else {
+                ScaffoldMessenger.of(contexto).showSnackBar(
+                  const SnackBar(content: Text('Arquivo não encontrado')),
+                );
+              }
+            },
+          ),
+        ],
+      ),
       body: ListView.builder(
         padding: const EdgeInsets.all(16.0),
         itemCount: estadoAplicativo.controladorCliente.clientes.length,
@@ -982,7 +1051,39 @@ class TelaProduto extends StatelessWidget {
   Widget build(BuildContext contexto) {
     final estadoAplicativo = Provider.of<EstadoAplicativo>(contexto);
     return Scaffold(
-      appBar: AppBar(title: const Text('Produtos')),
+      appBar: AppBar(
+        title: const Text('Produtos'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.download),
+            onPressed: () async {
+              final arquivo = await _obterArquivo('produtos.json');
+              if (await arquivo.exists()) {
+                final conteudo = await arquivo.readAsString();
+                showDialog(
+                  context: contexto,
+                  builder: (contexto) => AlertDialog(
+                    title: const Text('Conteúdo do Arquivo'),
+                    content: SingleChildScrollView(
+                      child: Text(conteudo),
+                    ),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(contexto),
+                        child: const Text('Fechar'),
+                      ),
+                    ],
+                  ),
+                );
+              } else {
+                ScaffoldMessenger.of(contexto).showSnackBar(
+                  const SnackBar(content: Text('Arquivo não encontrado')),
+                );
+              }
+            },
+          ),
+        ],
+      ),
       body: ListView.builder(
         padding: const EdgeInsets.all(16.0),
         itemCount: estadoAplicativo.controladorProduto.produtos.length,

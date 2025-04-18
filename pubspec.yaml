@@ -22,7 +22,3 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
-
-
-  git config --global user.email "viniciuspessanha@ucl.br"
-  git config --global user.name "vinitorucl"
