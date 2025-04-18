@@ -1,9 +1,0 @@
-rgb(228, 65, 192)
-rgb(151, 27, 252)
-rgb(130, 234, 255)
-rgb(88, 78, 225)
-rgb(78, 28, 222)
-
-
- git config --global user.email "viniciuspessana@cl.br"
- git config --global user.name "Vinitor3"
