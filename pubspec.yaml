@@ -10,10 +10,8 @@ dependencies:
   flutter:
     sdk: flutter
   provider: ^6.0.0
-  http: 1.3.0 
   path_provider: ^2.0.0
-  crypto: ^3.0.6
-  barcode_scan2: ^4.5.1  # Vercao mais reecente
+  shared_preferences: ^2.0.0
   
 dev_dependencies:
   flutter_test:

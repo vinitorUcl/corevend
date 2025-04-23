@@ -1,10 +1,8 @@
 import 'dart:convert';
-import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
-import 'package:http/http.dart' as http;
-import 'package:barcode_scan2/barcode_scan2.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
 //Verificar pq o ç não está funcionando no Android Studio
 /*
 * Aplicativo de Cadastro
@@ -12,16 +10,6 @@ import 'package:barcode_scan2/barcode_scan2.dart';
 * FACULDADE DO CENTRO LESTE - UCL
 * CURSO: ANÁLISE E DESENVOLVIMENTO DE SISTEMAS
 *
-* Referências:
-* Video aula de flutter com o professor Lucas Alves
-* - Gerenciamento de estado com Provider:
-* https://www.alura.com.br/artigos/como-gerenciar-estados-com-flutter-provider?srsltid=AfmBOoqcZPlv-TzABiieMLJAp-Mybz1HFJ2JqBNmN2z6gmW3AHxfZEDh
-*
-* Sistema de leitor de código de barras:
-* https://github.com/mono0926/barcode_scan2
-* 
-* Preenchimento de endereço a partir do CEP:
-* https://medium.com/flutter-comunidade-br/consultando-ceps-com-flutter-a395b86ce34a
 */
 
 // --- MODELOS DE ENTIDADE ---
@@ -151,9 +139,8 @@ class ControladorUsuario {
   
   // Carrega usuarios do arquivo
   Future<void> carregarUsuarios() async {
-    final arquivo = await _obterArquivo(nomeArquivo);
-    if (await arquivo.exists()) {
-      final conteudo = await arquivo.readAsString();
+    final conteudo = await _obterConteudoArquivo(nomeArquivo);
+    if (conteudo != null) {
       final List<dynamic> json = jsonDecode(conteudo);
       usuarios = json.map((e) => Usuario.deJson(e)).toList();
     } else {
@@ -163,10 +150,8 @@ class ControladorUsuario {
   }
 // Salva usuarios no arquivo
   Future<void> salvarUsuarios() async {
-    final arquivo = await _obterArquivo(nomeArquivo);
-    await arquivo.writeAsString(
-      jsonEncode(usuarios.map((e) => e.paraJson()).toList()),
-    );
+    final conteudo = jsonEncode(usuarios.map((e) => e.paraJson()).toList());
+    await _salvarConteudoArquivo(nomeArquivo, conteudo);
   }
 // Valida usuario (login)
   bool validarUsuario(String nome, String senha) {
@@ -212,17 +197,16 @@ class ControladorCliente {
   final String nomeArquivo = 'clientes.json';
 
   Future<void> carregarClientes() async {
-    final arquivo = await _obterArquivo(nomeArquivo);
-    if (await arquivo.exists()) {
-      final conteudo = await arquivo.readAsString();
+    final conteudo = await _obterConteudoArquivo(nomeArquivo);
+    if (conteudo != null) {
       final List<dynamic> json = jsonDecode(conteudo);
       clientes = json.map((e) => Cliente.deJson(e)).toList();
     }
   }
 
   Future<void> salvarClientes() async {
-    final arquivo = await _obterArquivo(nomeArquivo);
-    await arquivo.writeAsString(
+    await _salvarConteudoArquivo(
+      nomeArquivo,
       jsonEncode(clientes.map((e) => e.paraJson()).toList()),
     );
   }
@@ -258,17 +242,16 @@ class ControladorProduto {
   final String nomeArquivo = 'produtos.json';
 
   Future<void> carregarProdutos() async {
-    final arquivo = await _obterArquivo(nomeArquivo);
-    if (await arquivo.exists()) {
-      final conteudo = await arquivo.readAsString();
+    final conteudo = await _obterConteudoArquivo(nomeArquivo);
+    if (conteudo != null) {
       final List<dynamic> json = jsonDecode(conteudo);
       produtos = json.map((e) => Produto.deJson(e)).toList();
     }
   }
 
   Future<void> salvarProdutos() async {
-    final arquivo = await _obterArquivo(nomeArquivo);
-    await arquivo.writeAsString(
+    await _salvarConteudoArquivo(
+      nomeArquivo,
       jsonEncode(produtos.map((e) => e.paraJson()).toList()),
     );
   }
@@ -313,10 +296,16 @@ class ControladorProduto {
   }
 }
 
-// Obtem arquivo no diretorio do app
-Future<File> _obterArquivo(String nomeArquivo) async {
-  final diretorio = await getApplicationDocumentsDirectory();
-  return File('${diretorio.path}/$nomeArquivo');
+// Obtem conteúdo do "arquivo" usando SharedPreferences
+Future<String?> _obterConteudoArquivo(String nomeArquivo) async {
+  final prefs = await SharedPreferences.getInstance();
+  return prefs.getString(nomeArquivo); // Retorna o conteúdo armazenado
+}
+
+// Salva conteúdo no "arquivo" usando SharedPreferences
+Future<void> _salvarConteudoArquivo(String nomeArquivo, String conteudo) async {
+  final prefs = await SharedPreferences.getInstance();
+  await prefs.setString(nomeArquivo, conteudo); // Salva o conteúdo
 }
 
 // --- GERENCIAMENTO DE ESTADO ---
@@ -566,9 +555,8 @@ class TelaUsuario extends StatelessWidget {
           IconButton(
             icon: const Icon(Icons.download),
             onPressed: () async {
-              final arquivo = await _obterArquivo('usuarios.json');
-              if (await arquivo.exists()) {
-                final conteudo = await arquivo.readAsString();
+              final conteudo = await _obterConteudoArquivo('usuarios.json');
+              if (conteudo != null) {
                 showDialog(
                   context: contexto,
                   builder: (contexto) => AlertDialog(
@@ -733,9 +721,8 @@ class TelaCliente extends StatelessWidget {
           IconButton(
             icon: const Icon(Icons.download),
             onPressed: () async {
-              final arquivo = await _obterArquivo('clientes.json');
-              if (await arquivo.exists()) {
-                final conteudo = await arquivo.readAsString();
+              final conteudo = await _obterConteudoArquivo('clientes.json');
+              if (conteudo != null) {
                 showDialog(
                   context: contexto,
                   builder: (contexto) => AlertDialog(
@@ -897,32 +884,9 @@ class TelaCliente extends StatelessWidget {
                           keyboardType: TextInputType.number,
                           onChanged: (valor) async {
                             if (valor.length == 8) {
-                              final url = Uri.parse(
-                                'https://viacep.com.br/ws/$valor/json/',
-                              );
-                              final resposta = await http.get(url);
-
-                              if (resposta.statusCode == 200) {
-                                final dados = jsonDecode(resposta.body);
-
-                                if (dados['erro'] == null) {
-                                  controladorEndereco.text =
-                                      dados['logradouro'] ?? '';
-                                  controladorBairro.text =
-                                      dados['bairro'] ?? '';
-                                  controladorCidade.text =
-                                      dados['localidade'] ?? '';
-                                  controladorEstado.text = dados['uf'] ?? '';
-                                } else {
-                                  setState(() {
-                                    mensagemErro = 'CEP inválido';
-                                  });
-                                }
-                              } else {
-                                setState(() {
-                                  mensagemErro = 'Erro ao buscar o CEP';
-                                });
-                              }
+                              setState(() {
+                                mensagemErro = 'Função de busca de CEP desativada';
+                              });
                             }
                           },
                         ),
@@ -1057,9 +1021,8 @@ class TelaProduto extends StatelessWidget {
           IconButton(
             icon: const Icon(Icons.download),
             onPressed: () async {
-              final arquivo = await _obterArquivo('produtos.json');
-              if (await arquivo.exists()) {
-                final conteudo = await arquivo.readAsString();
+              final conteudo = await _obterConteudoArquivo('produtos.json');
+              if (conteudo != null) {
                 showDialog(
                   context: contexto,
                   builder: (contexto) => AlertDialog(
@@ -1250,7 +1213,7 @@ class TelaProduto extends StatelessWidget {
                                 color: Colors.teal,
                               ),
                               onPressed: () async {
-                                try {
+                                /*try {
                                   var resultado = await BarcodeScanner.scan();
                                   if (resultado.type == ResultType.Barcode) {
                                     controladorCodigoBarras.text =
@@ -1262,7 +1225,7 @@ class TelaProduto extends StatelessWidget {
                                       content: Text('Erro ao escanear: $e'),
                                     ),
                                   );
-                                }
+                                }*/
                               },
                             ),
                           ),
